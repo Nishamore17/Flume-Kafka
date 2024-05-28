@@ -1,0 +1,23 @@
+flagent.sources = src1
+flagent.channels = ch1
+flagent.sinks = sink1
+flagent.sources.src1.type = exec
+flagent.sources.src1.command = tail -F /tmp/access_log
+flagent.sources.src1.channels = ch1
+flagent.channels.ch1.type = memory
+flagent.channels.ch1.capacity = 500
+flagent.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+flagent.sinks.sink1.topic = accesslogs
+flagent.sinks.sink1.brokerList = elephant.training.com:9092
+flagent.sinks.sink1.requiredAcks = 1
+flagent.sinks.sink1.batchSize = 20
+flagent.sinks.sink1.channel = ch1
+
+kafka-topics --create --bootstrap-server elephant.training.com:9092 --replication-factor 1 --partitions 1 --topic accesslogs
+
+kafka-console-consumer --bootstrap-server elephant.training.com:9092 --topic accesslogs
+
+chmod 777 accesslog-gen.bash
+./accesslog-gen.bash /tmp/access_log
+
+flume-ng agent --conf-file /root/flume/flume-conf.properties --name flagent

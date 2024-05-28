@@ -1,0 +1,26 @@
+kafka-topics --create --zookeeper ip-10-1-1-204.ap-south-1.compute.internal --replication-factor 1 --partitions 1 --topic accesslogs
+
+vi fafka.conf
+flagent.sources = src1
+flagent.channels = ch1
+flagent.sinks = sink1
+flagent.sources.src1.type = exec
+flagent.sources.src1.command = tail -F /home/pskforever2020/data/
+flagent.sources.src1.channels = ch1
+flagent.channels.ch1.type = memory
+flagent.channels.ch1.capacity = 500
+flagent.sinks.sink1.type = org.apache.flume.sink.kafka.KafkaSink
+flagent.sinks.sink1.topic = accesslogs
+flagent.sinks.sink1.brokerList = ip-10-1-1-204.ap-south-1.compute.internal:9092
+flagent.sinks.sink1.requiredAcks = 1
+flagent.sinks.sink1.batchSize = 20
+flagent.sinks.sink1.channel = ch1
+
+Terminal 1
+kafka-console-consumer --bootstrap-server ip-10-1-1-204.ap-south-1.compute.internal:9092 --topic accesslogs
+
+Terminal2
+./accesslog-gen.bash /home/pskforever2020/data/access_log
+
+Terminal3
+flume-ng agent --conf-file /home/pskforever2020/fafka.conf --name flagent
